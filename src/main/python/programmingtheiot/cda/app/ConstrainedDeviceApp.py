@@ -13,8 +13,55 @@
 import logging
 
 from time import sleep
+from programmingtheiot.common.ConfigUtil import ConfigUtil
+from programmingtheiot.common.ConfigConst import ConfigConst
 
 logging.basicConfig(format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s', level = logging.DEBUG)
+
+
+class SystemPerformanceManager:
+    """
+    Clase para gestionar el rendimiento del sistema en un dispositivo con recursos limitados.
+    """
+
+    def __init__(self):
+        """
+        Constructor de la clase. Configura los parámetros iniciales.
+        """
+        self.logger = logging.getLogger(__name__)
+        configUtil = ConfigUtil()
+
+        self.pollRate = configUtil.getInteger(
+            section=ConfigConst.CONSTRAINED_DEVICE,
+            key=ConfigConst.POLL_CYCLES_KEY,
+            defaultVal=ConfigConst.DEFAULT_POLL_CYCLES
+        )
+
+        self.locationID = configUtil.getProperty(
+            section=ConfigConst.CONSTRAINED_DEVICE,
+            key=ConfigConst.DEVICE_LOCATION_ID_KEY,
+            defaultVal=ConfigConst.NOT_SET
+        )
+
+        if self.pollRate <= 0:
+            self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
+
+        self.dataMsgListener = None
+        self.logger.info("SystemPerformanceManager inicializado con pollRate=%d y locationID='%s'.",
+                         self.pollRate, self.locationID)
+
+    def startManager(self):
+        """
+        Inicia el gestor de rendimiento del sistema.
+        """
+        self.logger.info("Started SystemPerformanceManager.")
+
+    def stopManager(self):
+        """
+        Detiene el gestor de rendimiento del sistema.
+        """
+        self.logger.info("Stopped SystemPerformanceManager.")
+        
 
 class ConstrainedDeviceApp():
 	"""
@@ -28,31 +75,35 @@ class ConstrainedDeviceApp():
 		
 		@param path The name of the resource to apply to the URI.
 		"""
-		logging.info("Initializing CDA...")
-		
-		# TODO: implementation here
+		self.logger = logging.getLogger(__name__)
+        
+		self.logger.info("Initializing CDA...")
+  
+		self.sysPerfManager = SystemPerformanceManager()
 
 	def startApp(self):
 		"""
 		Start the CDA. Calls startManager() on the device data manager instance.
 		
 		"""
-		logging.info("Starting CDA...")
+		self.logger.info("Starting CDA...")
+  
+		self.sysPerfManager.startManager()
 		
-		# TODO: implementation here
-		
-		logging.info("CDA started.")
+		self.logger.info("CDA started.")
+  
+
 
 	def stopApp(self, code: int):
 		"""
 		Stop the CDA. Calls stopManager() on the device data manager instance.
 		
 		"""
-		logging.info("CDA stopping...")
+		self.logger.info("CDA stopping...")
+  
+		self.sysPerfManager.stopManager()
 		
-		# TODO: implementation here
-		
-		logging.info("CDA stopped with exit code %s.", str(code))
+		self.logger.info("CDA stopped with exit code %s.", str(code))
 		
 	def parseArgs(self, args):
 		"""
@@ -72,8 +123,8 @@ def main():
 	cda = ConstrainedDeviceApp()
 	cda.startApp()
 	
-	# run for 10 seconds - this can be changed as needed
-	sleep(10)
+	# run for 65 seconds - this can be changed as needed
+	sleep(65)
 	
 	# optionally stop the app - this can be removed if needed
 	cda.stopApp(0)
