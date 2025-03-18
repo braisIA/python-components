@@ -14,7 +14,8 @@ import logging
 
 from time import sleep
 from programmingtheiot.common.ConfigUtil import ConfigUtil
-from programmingtheiot.common.ConfigConst import ConfigConst
+from programmingtheiot.common.ConfigConst import CONSTRAINED_DEVICE, POLL_CYCLES_KEY, DEFAULT_POLL_CYCLES, DEVICE_LOCATION_ID_KEY, NOT_SET
+
 
 logging.basicConfig(format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s', level = logging.DEBUG)
 
@@ -32,19 +33,19 @@ class SystemPerformanceManager:
         configUtil = ConfigUtil()
 
         self.pollRate = configUtil.getInteger(
-            section=ConfigConst.CONSTRAINED_DEVICE,
-            key=ConfigConst.POLL_CYCLES_KEY,
-            defaultVal=ConfigConst.DEFAULT_POLL_CYCLES
+            section=CONSTRAINED_DEVICE,
+            key=POLL_CYCLES_KEY,
+            defaultVal=DEFAULT_POLL_CYCLES
         )
 
         self.locationID = configUtil.getProperty(
-            section=ConfigConst.CONSTRAINED_DEVICE,
-            key=ConfigConst.DEVICE_LOCATION_ID_KEY,
-            defaultVal=ConfigConst.NOT_SET
+            section=CONSTRAINED_DEVICE,
+            key=DEVICE_LOCATION_ID_KEY,
+            defaultVal=NOT_SET
         )
 
         if self.pollRate <= 0:
-            self.pollRate = ConfigConst.DEFAULT_POLL_CYCLES
+            self.pollRate = DEFAULT_POLL_CYCLES
 
         self.dataMsgListener = None
         self.logger.info("SystemPerformanceManager inicializado con pollRate=%d y locationID='%s'.",
