@@ -12,33 +12,35 @@ import programmingtheiot.common.ConfigConst as ConfigConst
 from programmingtheiot.data.BaseIotData import BaseIotData
 
 class SystemPerformanceData(BaseIotData):
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
-	DEFAULT_VAL = 0.0
-	
-	def __init__(self, d = None):
-		super(SystemPerformanceData, self).__init__(name = ConfigConst.SYSTEM_PERF_MSG, typeID = ConfigConst.SYSTEM_PERF_TYPE, d = d)
-		pass
-	
-	def getCpuUtilization(self):
-		pass
-	
-	def getDiskUtilization(self):
-		pass
-	
-	def getMemoryUtilization(self):
-		pass
-	
-	def setCpuUtilization(self, cpuUtil):
-		pass
-	
-	def setDiskUtilization(self, diskUtil):
-		pass
-	
-	def setMemoryUtilization(self, memUtil):
-		pass
-	
-	def _handleUpdateData(self, data):
-		pass
+    """
+    Representation of system performance data, including CPU and memory utilization.
+    """
+    
+    def __init__(self, d=None):
+        super(SystemPerformanceData, self).__init__(name=ConfigConst.SYS_PERF_NAME, typeID=ConfigConst.SYS_PERF_TYPE, d=d)
+        self.cpuUtil = ConfigConst.DEFAULT_VAL
+        self.memUtil = ConfigConst.DEFAULT_VAL
+    
+    def getCpuUtilization(self):
+        return self.cpuUtil
+    
+    def getMemoryUtilization(self):
+        return self.memUtil
+    
+    def setCpuUtilization(self, cpuUtil):
+        self.cpuUtil = cpuUtil
+        self.updateTimeStamp()
+    
+    def setMemoryUtilization(self, memUtil):
+        self.memUtil = memUtil
+        self.updateTimeStamp()
+    
+    def _handleUpdateData(self, data):
+        if isinstance(data, SystemPerformanceData):
+            self.cpuUtil = data.getCpuUtilization()
+            self.memUtil = data.getMemoryUtilization()
+        else:
+            raise ValueError("Invalid data type for update.")
+    
+    def __str__(self):
+        return f"SystemPerformanceData: CPU Utilization={self.cpuUtil}, Memory Utilization={self.memUtil}, Timestamp={self.getTimeStamp()}"
