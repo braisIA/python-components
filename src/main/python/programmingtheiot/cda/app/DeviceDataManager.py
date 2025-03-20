@@ -1,12 +1,3 @@
-#####
-# 
-# This class is part of the Programming the Internet of Things project.
-# 
-# It is provided as a simple shell to guide the student and assist with
-# implementation for the Programming the Internet of Things exercises,
-# and designed to be modified by the student as needed.
-#
-
 import logging
 
 from programmingtheiot.cda.connection.CoapClientConnector import CoapClientConnector
@@ -26,131 +17,106 @@ from programmingtheiot.data.SensorData import SensorData
 from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 
 class DeviceDataManager(IDataMessageListener):
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
-	
-	def __init__(self):
-		pass
-		
-	def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
-		"""
-		Retrieves the named actuator data (response) item from the internal data cache.
-		
-		@param name
-		@return ActuatorData
-		"""
-		pass
-		
-	def getLatestSensorDataFromCache(self, name: str = None) -> SensorData:
-		"""
-		Retrieves the named sensor data item from the internal data cache.
-		
-		@param name
-		@return SensorData
-		"""
-		pass
-	
-	def getLatestSystemPerformanceDataFromCache(self, name: str = None) -> SystemPerformanceData:
-		"""
-		Retrieves the named system performance data from the internal data cache.
-		
-		@param name
-		@return SystemPerformanceData
-		"""
-		pass
-	
-	def handleActuatorCommandMessage(self, data: ActuatorData) -> bool:
-		"""
-		This callback method will be invoked by the connection that's handling
-		an incoming ActuatorData command message.
-		
-		@param data The incoming ActuatorData command message.
-		@return boolean
-		"""
-		pass
-	
-	def handleActuatorCommandResponse(self, data: ActuatorData) -> bool:
-		"""
-		This callback method will be invoked by the actuator manager that just
-		processed an ActuatorData command, which creates a new ActuatorData
-		instance and sets it as a response before calling this method.
-		
-		@param data The incoming ActuatorData response message.
-		@return boolean
-		"""
-		pass
-	
-	def handleIncomingMessage(self, resourceEnum: ResourceNameEnum, msg: str) -> bool:
-		"""
-		This callback method is generic and designed to handle any incoming string-based
-		message, which will likely be JSON-formatted and need to be converted to the appropriate
-		data type. You may not need to use this callback at all.
-		
-		@param data The incoming JSON message.
-		@return boolean
-		"""
-		pass
-	
-	def handleSensorMessage(self, data: SensorData) -> bool:
-		"""
-		This callback method will be invoked by the sensor manager that just processed
-		a new sensor reading, which creates a new SensorData instance that will be
-		passed to this method.
-		
-		@param data The incoming SensorData message.
-		@return boolean
-		"""
-		pass
-	
-	def handleSystemPerformanceMessage(self, data: SystemPerformanceData) -> bool:
-		"""
-		This callback method will be invoked by the system performance manager that just
-		processed a new sensor reading, which creates a new SystemPerformanceData instance
-		that will be passed to this method.
-		
-		@param data The incoming SystemPerformanceData message.
-		@return boolean
-		"""
-		pass
-	
-	def setSystemPerformanceDataListener(self, listener: ISystemPerformanceDataListener = None):
-		pass
-			
-	def setTelemetryDataListener(self, name: str = None, listener: ITelemetryDataListener = None):
-		pass
-			
-	def startManager(self):
-		pass
-		
-	def stopManager(self):
-		pass
-		
-	def _handleIncomingDataAnalysis(self, msg: str):
-		"""
-		Call this from handleIncomeMessage() to determine if there's
-		any action to take on the message. Steps to take:
-		1) Validate msg: Most will be ActuatorData, but you may pass other info as well.
-		2) Convert msg: Use DataUtil to convert if appropriate.
-		3) Act on msg: Determine what - if any - action is required, and execute.
-		"""
-		pass
-		
-	def _handleSensorDataAnalysis(self, data: SensorData):
-		"""
-		Call this from handleSensorMessage() to determine if there's
-		any action to take on the message. Steps to take:
-		1) Check config: Is there a rule or flag that requires immediate processing of data?
-		2) Act on data: If # 1 is true, determine what - if any - action is required, and execute.
-		"""
-		pass
-		
-	def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
-		"""
-		Call this from handleActuatorCommandResponse(), handlesensorMessage(), and handleSystemPerformanceMessage()
-		to determine if the message should be sent upstream. Steps to take:
-		1) Check connection: Is there a client connection configured (and valid) to a remote MQTT or CoAP server?
-		2) Act on msg: If # 1 is true, send message upstream using one (or both) client connections.
-		"""
-		pass
+    """
+    Implementation of the DeviceDataManager class for managing device data.
+    """
+
+    def __init__(self):
+        logging.info("Initializing DeviceDataManager...")
+        self.sysPerfMgr = SystemPerformanceManager()
+        self.sensorAdapterMgr = SensorAdapterManager()
+        self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener=self)
+        
+        self.coapClient = CoapClientConnector()
+        self.mqttClient = MqttClientConnector()
+
+        self.sysPerfMgr.setDataMessageListener(self)
+        self.sensorAdapterMgr.setDataMessageListener(self)
+
+        self.actuatorResponseCache = {}
+
+        logging.info("DeviceDataManager initialization complete.")
+
+    def getLatestActuatorDataResponseFromCache(self, name: str = None) -> ActuatorData:
+        logging.debug(f"Retrieving latest actuator data response for {name}.")
+        return self.actuatorResponseCache.get(name)
+
+    def getLatestSensorDataFromCache(self, name: str = None) -> SensorData:
+        logging.debug(f"Retrieving latest sensor data for {name}.")
+        # Stub implementation; actual implementation depends on internal cache structure.
+        return None
+
+    def getLatestSystemPerformanceDataFromCache(self, name: str = None) -> SystemPerformanceData:
+        logging.debug(f"Retrieving latest system performance data for {name}.")
+        # Stub implementation; actual implementation depends on internal cache structure.
+        return None
+
+    def handleActuatorCommandMessage(self, data: ActuatorData) -> bool:
+        if data:
+            logging.info(f"Processing actuator command: {data}")
+            return self.actuatorAdapterMgr.sendActuatorCommand(data)
+        logging.warning("Received null actuator command message. Ignoring.")
+        return False
+
+    def handleActuatorCommandResponse(self, data: ActuatorData) -> bool:
+        if data:
+            logging.debug(f"Processing actuator command response: {data}")
+            self.actuatorResponseCache[data.getName()] = data
+            self._handleUpstreamTransmission(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, str(data))
+            return True
+        logging.warning("Received null actuator command response. Ignoring.")
+        return False
+
+    def handleIncomingMessage(self, resourceEnum: ResourceNameEnum, msg: str) -> bool:
+        logging.debug(f"Handling incoming message for resource {resourceEnum}: {msg}")
+        # Add message parsing and handling logic here.
+        return True
+
+    def handleSensorMessage(self, data: SensorData) -> bool:
+        if data:
+            logging.info(f"Processing sensor message: {data}")
+            self._handleSensorDataAnalysis(data)
+            return True
+        logging.warning("Received null sensor message. Ignoring.")
+        return False
+
+    def handleSystemPerformanceMessage(self, data: SystemPerformanceData) -> bool:
+        if data:
+            logging.info(f"Processing system performance message: {data}")
+            self._handleUpstreamTransmission(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, str(data))
+            return True
+        logging.warning("Received null system performance message. Ignoring.")
+        return False
+
+    def setSystemPerformanceDataListener(self, listener: ISystemPerformanceDataListener = None):
+        logging.debug("Setting system performance data listener.")
+        # Implementation here if needed.
+
+    def setTelemetryDataListener(self, name: str = None, listener: ITelemetryDataListener = None):
+        logging.debug(f"Setting telemetry data listener for {name}.")
+        # Implementation here if needed.
+
+    def startManager(self):
+        logging.info("Starting DeviceDataManager...")
+        self.sysPerfMgr.startManager()
+        self.sensorAdapterMgr.startManager()
+        logging.info("DeviceDataManager started.")
+
+    def stopManager(self):
+        logging.info("Stopping DeviceDataManager...")
+        self.sysPerfMgr.stopManager()
+        self.sensorAdapterMgr.stopManager()
+        logging.info("DeviceDataManager stopped.")
+
+    def _handleIncomingDataAnalysis(self, msg: str):
+        logging.debug(f"Analyzing incoming data: {msg}")
+        # Add logic to analyze and act on the incoming data.
+
+    def _handleSensorDataAnalysis(self, data: SensorData):
+        logging.debug(f"Analyzing sensor data: {data}")
+        # Add logic for sensor data analysis, such as HVAC control.
+
+    def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
+        logging.debug(f"Transmitting data upstream for resource {resourceName}: {msg}")
+        # Add logic for transmitting data to the GDA or cloud services.
+

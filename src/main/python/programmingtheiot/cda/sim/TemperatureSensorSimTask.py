@@ -11,15 +11,18 @@ import logging
 
 from programmingtheiot.cda.sim.BaseSensorSimTask import BaseSensorSimTask
 from programmingtheiot.cda.sim.SensorDataGenerator import SensorDataGenerator
-
-from programmingtheiot.data.SensorData import SensorData
+import programmingtheiot.common.ConfigConst as ConfigConst
 
 class TemperatureSensorSimTask(BaseSensorSimTask):
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
+    """
+    Implementación de la tarea de simulación del sensor de temperatura.
+    """
 
-	def __init__(self):
-		pass
-	
+    def __init__(self, dataSet=None):
+        super(TemperatureSensorSimTask, self).__init__(
+            name=ConfigConst.TEMP_SENSOR_NAME,
+            typeID=ConfigConst.TEMP_SENSOR_TYPE,
+            dataSet=dataSet,
+            minVal=SensorDataGenerator.LOW_NORMAL_INDOOR_TEMP,
+            maxVal=SensorDataGenerator.HI_NORMAL_INDOOR_TEMP
+        )

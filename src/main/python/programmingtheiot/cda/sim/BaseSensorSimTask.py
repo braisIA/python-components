@@ -1,57 +1,78 @@
-#####
-# 
-# This class is part of the Programming the Internet of Things project.
-# 
-# It is provided as a simple shell to guide the student and assist with
-# implementation for the Programming the Internet of Things exercises,
-# and designed to be modified by the student as needed.
-#
-
 import logging
 import random
 
 import programmingtheiot.common.ConfigConst as ConfigConst
-
 from programmingtheiot.data.SensorData import SensorData
+from programmingtheiot.cda.sim.SensorDataGenerator import SensorDataSet
 
-class BaseSensorSimTask():
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
+class BaseSensorSimTask:
+    """
+    Base class for simulating sensor data.
+    """
 
-	DEFAULT_MIN_VAL = 0.0
-	DEFAULT_MAX_VAL = 1000.0
-	
-	def __init__(self, name = ConfigConst.NOT_SET, typeID: int = ConfigConst.DEFAULT_SENSOR_TYPE, dataSet = None, minVal: float = DEFAULT_MIN_VAL, maxVal: float = DEFAULT_MAX_VAL):
-		pass
-	
-	def generateTelemetry(self) -> SensorData:
-		"""
-		Implement basic logging and SensorData creation. Sensor-specific functionality
-		should be implemented by sub-class.
-		
-		A local reference to SensorData can be contained in this base class.
-		"""
-		pass
-	
-	def getTelemetryValue(self) -> float:
-		"""
-		If a local reference to SensorData is not None, simply return its current value.
-		If SensorData hasn't yet been created, call self.generateTelemetry(), then return
-		its current value.
-		"""
-		pass
-	
-	def getLatestTelemetry(self) -> SensorData:
-		"""
-		This can return the current SensorData instance or a copy.
-		"""
-		pass
-	
-	def getName(self) -> str:
-		pass
-	
-	def getTypeID(self) -> int:
-		pass
-	
+    DEFAULT_MIN_VAL = ConfigConst.DEFAULT_VAL
+    DEFAULT_MAX_VAL = 100.0
+
+    def __init__(self, name: str = ConfigConst.NOT_SET, typeID: int = ConfigConst.DEFAULT_SENSOR_TYPE, dataSet: SensorDataSet = None, minVal: float = DEFAULT_MIN_VAL, maxVal: float = DEFAULT_MAX_VAL):
+        """
+        Initializes the BaseSensorSimTask with a name, typeID, and optional dataset.
+        If no dataset is provided, it uses a randomizer.
+        """
+        self.dataSet = dataSet
+        self.name = name
+        self.typeID = typeID
+        self.dataSetIndex = 0
+        self.useRandomizer = dataSet is None
+        self.minVal = minVal
+        self.maxVal = maxVal
+        self.latestSensorData = None
+
+    def getName(self) -> str:
+        """
+        Returns the sensor name.
+        """
+        return self.name
+
+    def getTypeID(self) -> int:
+        """
+        Returns the sensor type ID.
+        """
+        return self.typeID
+
+    def generateTelemetry(self) -> SensorData:
+        """
+        Generates new telemetry data.
+        Uses a random value if no dataset is provided.
+        """
+        sensorData = SensorData(typeID=self.getTypeID(), name=self.getName())
+        sensorVal = ConfigConst.DEFAULT_VAL
+
+        if self.useRandomizer:
+            sensorVal = random.uniform(self.minVal, self.maxVal)
+        else:
+            sensorVal = self.dataSet.getDataEntry(index=self.dataSetIndex)
+            self.dataSetIndex += 1
+
+            if self.dataSetIndex >= self.dataSet.getDataEntryCount():
+                self.dataSetIndex = 0
+
+        sensorData.setValue(sensorVal)
+        self.latestSensorData = sensorData
+
+        return self.latestSensorData
+
+    def getTelemetryValue(self) -> float:
+        """
+        Returns the latest telemetry value.
+        If no data exists, generates new telemetry data first.
+        """
+        if not self.latestSensorData:
+            self.generateTelemetry()
+
+        return self.latestSensorData.getValue()
+
+    def getLatestTelemetry(self) -> SensorData:
+        """
+        Returns the latest SensorData instance.
+        """
+        return self.latestSensorData
