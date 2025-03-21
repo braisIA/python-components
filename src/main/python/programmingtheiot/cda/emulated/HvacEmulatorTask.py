@@ -8,28 +8,51 @@
 #
 
 import logging
-
 from time import sleep
-
 import programmingtheiot.common.ConfigConst as ConfigConst
-
 from programmingtheiot.common.ConfigUtil import ConfigUtil
 from programmingtheiot.cda.sim.BaseActuatorSimTask import BaseActuatorSimTask
-
 from pisense import SenseHAT
 
 class HvacEmulatorTask(BaseActuatorSimTask):
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
+    """
+    Emulador para el actuador de HVAC.
+    """
 
-	def __init__(self):
-		pass
+    def __init__(self):
+        super(HvacEmulatorTask, self).__init__(
+            name = ConfigConst.HVAC_ACTUATOR_NAME,
+            typeID = ConfigConst.HVAC_ACTUATOR_TYPE,
+            simpleName = "HVAC"
+        )
 
-	def _activateActuator(self, val: float = ConfigConst.DEFAULT_VAL, stateData: str = None) -> int:
-		pass
+        # Obtener si se debe emular el hardware desde la configuración
+        enableEmulation = ConfigUtil().getBoolean(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.ENABLE_EMULATOR_KEY)
 
-	def _deactivateActuator(self, val: float = ConfigConst.DEFAULT_VAL, stateData: str = None) -> int:
-		pass
-	
+        # Inicializar SenseHAT en modo emulación si enableEmulation es True
+        self.sh = SenseHAT(emulate = enableEmulation)
+
+    def _activateActuator(self, val: float = ConfigConst.DEFAULT_VAL, stateData: str = None) -> int:
+        """ Activa el actuador HVAC y muestra el mensaje en la pantalla """
+        if self.sh.screen:
+            msg = f"{self.getSimpleName()} ON: {val}C"
+            self.sh.screen.scroll_text(msg)
+            return 0
+        else:
+            logging.warning("No SenseHAT LED screen instance to write.")
+            return -1
+
+    def _deactivateActuator(self, val: float = ConfigConst.DEFAULT_VAL, stateData: str = None) -> int:
+        """ Desactiva el actuador HVAC y limpia la pantalla """
+        if self.sh.screen:
+            msg = f"{self.getSimpleName()} OFF"
+            self.sh.screen.scroll_text(msg)
+
+            # Opcional: Dormir por 5 segundos para permitir que el mensaje se desplace antes de borrar
+            sleep(5)
+
+            self.sh.screen.clear()
+            return 0
+        else:
+            logging.warning("No SenseHAT LED screen instance to clear / close.")
+            return -1
