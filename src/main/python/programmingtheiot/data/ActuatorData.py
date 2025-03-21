@@ -8,43 +8,47 @@
 #
 
 import programmingtheiot.common.ConfigConst as ConfigConst
-
 from programmingtheiot.data.BaseIotData import BaseIotData
 
 class ActuatorData(BaseIotData):
-	"""
-	Shell representation of class for student implementation.
-	
-	"""
-
-	def __init__(self, typeID: int = ConfigConst.DEFAULT_ACTUATOR_TYPE, name = ConfigConst.NOT_SET, d = None):
-		super(ActuatorData, self).__init__(name = name, typeID = typeID, d = d)
-		pass
-	
-	def getCommand(self) -> int:
-		pass
-	
-	def getStateData(self) -> str:
-		pass
-	
-	def getValue(self) -> float:
-		pass
-	
-	def isResponseFlagEnabled(self) -> bool:
-		return False
-	
-	def setCommand(self, command: int):
-		pass
-	
-	def setAsResponse(self):
-		pass
-		
-	def setStateData(self, stateData: str):
-		pass
-	
-	def setValue(self, val: float):
-		pass
-		
-	def _handleUpdateData(self, data):
-		pass
-		
+    """
+    Represents an actuator command with support for float values and state messages.
+    """
+    
+    def __init__(self, name=ConfigConst.NOT_SET, typeID=ConfigConst.DEFAULT_ACTUATOR_TYPE, d=None):
+        super().__init__(name=name, typeID=typeID, d=d)
+        self.value = ConfigConst.DEFAULT_VAL
+        self.command = ConfigConst.DEFAULT_COMMAND
+        self.stateData = ""
+    
+    def getValue(self) -> float:
+        return self.value
+    
+    def setValue(self, val: float):
+        self.value = val
+    
+    def getCommand(self) -> int:
+        return self.command
+    
+    def setCommand(self, command: int):
+        self.command = command
+        self.updateTimeStamp()
+    
+    def getStateData(self) -> str:
+        return self.stateData
+    
+    def setStateData(self, stateData: str):
+        self.stateData = stateData
+    
+    def _handleUpdateData(self, data):
+        if isinstance(data, ActuatorData):
+            try:
+                self.value = data.getValue()
+                self.command = data.getCommand()
+                self.stateData = data.getStateData()
+            except Exception as e:
+                self.hasError = True
+    
+    def __str__(self):
+        return f"ActuatorData: name={self.name}, typeID={self.typeID}, value={self.value}, " \
+               f"command={self.command}, stateData={self.stateData}"
