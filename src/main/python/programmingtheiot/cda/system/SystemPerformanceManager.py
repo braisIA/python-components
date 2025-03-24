@@ -56,31 +56,38 @@ class SystemPerformanceManager(object):
         # Instanciar las tareas de utilización de CPU y memoria
         self.cpuUtilTask = SystemCpuUtilTask()
         self.memUtilTask = SystemMemUtilTask()
+        
+        self.cpuUtilPct = 0.0
+        self.memUtilPct = 0.0
 
     def handleTelemetry(self):
-        # Obtener los valores de utilización de CPU y memoria
-        cpuUtilPct = self.cpuUtilTask.getTelemetryValue()
-        memUtilPct = self.memUtilTask.getTelemetryValue()
+        # Obtener los valores de utilización
+        self.cpuUtilPct = self.cpuUtilTask.getTelemetryValue()
+        self.memUtilPct = self.memUtilTask.getTelemetryValue()
 
-        # Crear una instancia de SystemPerformanceData
-        systemData = SystemPerformanceData(cpuUtilPct, memUtilPct)
-
-        # Registrar los resultados
         logging.debug(
             'CPU utilization is %s percent, and memory utilization is %s percent.',
-            str(cpuUtilPct), str(memUtilPct)
+            str(self.cpuUtilPct), str(self.memUtilPct)
         )
 
-        # Si se ha configurado un listener de mensajes de datos, notificarlo
+        # Crear objeto SystemPerformanceData y llenar con datos
+        sysPerfData = SystemPerformanceData()
+        sysPerfData.setLocationID(self.locationID)
+        sysPerfData.setCpuUtilization(self.cpuUtilPct)
+        sysPerfData.setMemoryUtilization(self.memUtilPct)
+
+        # Notificar al listener, si está configurado
         if self.dataMsgListener:
-            self.dataMsgListener.onDataMessage(systemData)
+            self.dataMsgListener.handleSystemPerformanceMessage(data=sysPerfData)
 
     def setDataMessageListener(self, listener: IDataMessageListener) -> bool:
         """
         Set the data message listener to handle system performance data.
         """
-        self.dataMsgListener = listener
-        return True
+        if listener:
+            self.dataMsgListener = listener
+            return True
+        return False
 
     def startManager(self):
         logging.info("Starting SystemPerformanceManager...")
