@@ -13,29 +13,38 @@ from programmingtheiot.data.BaseIotData import BaseIotData
 
 class SensorData(BaseIotData):
     """
-    Represents sensor data with support for floating-point values.
-    Inherits from BaseIotData.
+    Representa los datos de un sensor, heredando de BaseIotData.
+    Proporciona un valor flotante como lectura del sensor.
     """
-    
+
     def __init__(self, typeID: int = ConfigConst.DEFAULT_SENSOR_TYPE, name = ConfigConst.NOT_SET, d = None):
-        super(SensorData, self).__init__(name = name, typeID = typeID, d = d)
+        super(SensorData, self).__init__(name=name, typeID=typeID, d=d)
         self.value = ConfigConst.DEFAULT_VAL
-    
+
     def getValue(self) -> float:
-        """Returns the current sensor value."""
+        """
+        Devuelve el valor actual del sensor.
+        """
         return self.value
-    
+
     def setValue(self, newVal: float):
-        """Sets the sensor value and updates the timestamp."""
+        """
+        Establece un nuevo valor para el sensor y actualiza el timestamp.
+        """
         self.value = newVal
         self.updateTimeStamp()
-    
+
     def _handleUpdateData(self, data):
-        """Handles updating data from another SensorData instance."""
+        """
+        Actualiza los datos del sensor desde otra instancia de SensorData.
+        """
         if isinstance(data, SensorData):
             self.value = data.getValue()
         else:
-            raise TypeError("Expected instance of SensorData")
-    
+            raise TypeError("Se esperaba una instancia de SensorData")
+
     def __str__(self):
-        return f"SensorData(name={self.name}, typeID={self.typeID}, value={self.value}, timestamp={self.timeStamp})"
+        return (
+            f"SensorData [ name = {self.name}, typeID = {self.typeID}, "
+            f"value = {self.value}, timestamp = {self.timeStamp} ]"
+        )
