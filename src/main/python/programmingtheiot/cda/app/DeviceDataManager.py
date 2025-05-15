@@ -11,6 +11,8 @@ from programmingtheiot.common.IDataMessageListener import IDataMessageListener
 from programmingtheiot.common.ISystemPerformanceDataListener import ISystemPerformanceDataListener
 from programmingtheiot.common.ITelemetryDataListener import ITelemetryDataListener
 from programmingtheiot.common.ResourceNameEnum import ResourceNameEnum
+import programmingtheiot.common.ConfigConst as ConfigConst
+from programmingtheiot.common.ConfigUtil import ConfigUtil
 
 from programmingtheiot.data.ActuatorData import ActuatorData
 from programmingtheiot.data.SensorData import SensorData
@@ -23,12 +25,28 @@ class DeviceDataManager(IDataMessageListener):
 
     def __init__(self):
         logging.info("Initializing DeviceDataManager...")
+
         self.sysPerfMgr = SystemPerformanceManager()
         self.sensorAdapterMgr = SensorAdapterManager()
         self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener=self)
-        
+
         self.coapClient = CoapClientConnector()
-        self.mqttClient = MqttClientConnector()
+
+        # Crear instancia de ConfigUtil para leer la configuración
+        self.configUtil = ConfigUtil()
+
+        # Chequear si MQTT está habilitado en la configuración
+        self.enableMqttClient = self.configUtil.getBoolean(
+            section=ConfigConst.CONSTRAINED_DEVICE, 
+            key=ConfigConst.ENABLE_MQTT_CLIENT_KEY
+        )
+
+        self.mqttClient = None
+
+        if self.enableMqttClient:
+            self.mqttClient = MqttClientConnector()
+            # El objeto DeviceDataManager actuará como listener de mensajes MQTT
+            self.mqttClient.setDataMessageListener(self)
 
         self.sysPerfMgr.setDataMessageListener(self)
         self.sensorAdapterMgr.setDataMessageListener(self)
@@ -100,12 +118,26 @@ class DeviceDataManager(IDataMessageListener):
         logging.info("Starting DeviceDataManager...")
         self.sysPerfMgr.startManager()
         self.sensorAdapterMgr.startManager()
+
+        if self.mqttClient:
+            self.mqttClient.connectClient()
+            self.mqttClient.subscribeToTopic(
+                ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE,
+                callback=None,
+                qos=ConfigConst.DEFAULT_QOS
+            )
+
         logging.info("DeviceDataManager started.")
 
     def stopManager(self):
         logging.info("Stopping DeviceDataManager...")
         self.sysPerfMgr.stopManager()
         self.sensorAdapterMgr.stopManager()
+
+        if self.mqttClient:
+            self.mqttClient.unsubscribeFromTopic(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE)
+            self.mqttClient.disconnectClient()
+
         logging.info("DeviceDataManager stopped.")
 
     def _handleIncomingDataAnalysis(self, msg: str):
@@ -119,4 +151,3 @@ class DeviceDataManager(IDataMessageListener):
     def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
         logging.debug(f"Transmitting data upstream for resource {resourceName}: {msg}")
         # Add logic for transmitting data to the GDA or cloud services.
-
