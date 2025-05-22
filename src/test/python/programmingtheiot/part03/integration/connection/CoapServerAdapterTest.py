@@ -106,7 +106,7 @@ class CoapServerAdapterTest(unittest.TestCase):
 		
 		sleep(5)
 
-	#@unittest.skip("Ignore for now.")
+	
 	def testConnectAndGetCon(self):
 		"""
 		Comment the annotation to test CON GET
