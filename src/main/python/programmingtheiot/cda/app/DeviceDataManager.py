@@ -18,6 +18,7 @@ from programmingtheiot.data.ActuatorData import ActuatorData
 from programmingtheiot.data.SensorData import SensorData
 from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
 
+
 class DeviceDataManager(IDataMessageListener):
     """
     Implementation of the DeviceDataManager class for managing device data.
@@ -30,23 +31,29 @@ class DeviceDataManager(IDataMessageListener):
         self.sensorAdapterMgr = SensorAdapterManager()
         self.actuatorAdapterMgr = ActuatorAdapterManager(dataMsgListener=self)
 
-        self.coapClient = CoapClientConnector()
-
         # Crear instancia de ConfigUtil para leer la configuración
         self.configUtil = ConfigUtil()
 
-        # Chequear si MQTT está habilitado en la configuración
+        # Inicializar MQTT si está habilitado
         self.enableMqttClient = self.configUtil.getBoolean(
             section=ConfigConst.CONSTRAINED_DEVICE, 
             key=ConfigConst.ENABLE_MQTT_CLIENT_KEY
         )
 
         self.mqttClient = None
-
         if self.enableMqttClient:
             self.mqttClient = MqttClientConnector()
-            # El objeto DeviceDataManager actuará como listener de mensajes MQTT
             self.mqttClient.setDataMessageListener(self)
+
+        # Inicializar CoAP si está habilitado
+        self.enableCoapClient = self.configUtil.getBoolean(
+            section=ConfigConst.CONSTRAINED_DEVICE,
+            key=ConfigConst.ENABLE_COAP_CLIENT_KEY
+        )
+
+        self.coapClient = None
+        if self.enableCoapClient:
+            self.coapClient = CoapClientConnector(dataMsgListener=self)
 
         self.sysPerfMgr.setDataMessageListener(self)
         self.sensorAdapterMgr.setDataMessageListener(self)
@@ -61,12 +68,10 @@ class DeviceDataManager(IDataMessageListener):
 
     def getLatestSensorDataFromCache(self, name: str = None) -> SensorData:
         logging.debug(f"Retrieving latest sensor data for {name}.")
-        # Stub implementation; actual implementation depends on internal cache structure.
         return None
 
     def getLatestSystemPerformanceDataFromCache(self, name: str = None) -> SystemPerformanceData:
         logging.debug(f"Retrieving latest system performance data for {name}.")
-        # Stub implementation; actual implementation depends on internal cache structure.
         return None
 
     def handleActuatorCommandMessage(self, data: ActuatorData) -> bool:
@@ -87,7 +92,6 @@ class DeviceDataManager(IDataMessageListener):
 
     def handleIncomingMessage(self, resourceEnum: ResourceNameEnum, msg: str) -> bool:
         logging.debug(f"Handling incoming message for resource {resourceEnum}: {msg}")
-        # Add message parsing and handling logic here.
         return True
 
     def handleSensorMessage(self, data: SensorData) -> bool:
@@ -108,11 +112,9 @@ class DeviceDataManager(IDataMessageListener):
 
     def setSystemPerformanceDataListener(self, listener: ISystemPerformanceDataListener = None):
         logging.debug("Setting system performance data listener.")
-        # Implementation here if needed.
 
     def setTelemetryDataListener(self, name: str = None, listener: ITelemetryDataListener = None):
         logging.debug(f"Setting telemetry data listener for {name}.")
-        # Implementation here if needed.
 
     def startManager(self):
         logging.info("Starting DeviceDataManager...")
@@ -142,12 +144,9 @@ class DeviceDataManager(IDataMessageListener):
 
     def _handleIncomingDataAnalysis(self, msg: str):
         logging.debug(f"Analyzing incoming data: {msg}")
-        # Add logic to analyze and act on the incoming data.
 
     def _handleSensorDataAnalysis(self, data: SensorData):
         logging.debug(f"Analyzing sensor data: {data}")
-        # Add logic for sensor data analysis, such as HVAC control.
 
     def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
         logging.debug(f"Transmitting data upstream for resource {resourceName}: {msg}")
-        # Add logic for transmitting data to the GDA or cloud services.
